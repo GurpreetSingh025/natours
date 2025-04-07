@@ -1,0 +1,5 @@
+In this commit 
+filtering is done on queries using some mongoose in-built methods
+pagination is done using skip method
+sorting is done using sort 
+and field limitation is done using select method
