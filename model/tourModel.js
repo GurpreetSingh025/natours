@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator') ;
 // const slugify = require('slugify') ;
 
 const tourSchema = new mongoose.Schema({
@@ -6,7 +7,8 @@ const tourSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true ,
-        maxLength : [40 , 'Name cannot have more than 40 characters']
+        maxLength : [40 , 'Name cannot have more than 40 characters'] ,
+        // validate : [validator.isAlpha , 'Tour name must only contain characters'] 
     },
     duration: {
         type: Number,
@@ -35,7 +37,23 @@ const tourSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'A tour must have a price']
     },
-    priceDiscount: Number,
+    priceDiscount: {
+        type : Number ,
+
+        // Custom validators
+        //either write custom validators or use a package which validates and sanitize
+        // most famous package is validator.js
+        validate : {
+            validator : function(val) {
+                // this keyword only point to document when we are creating a new document , it does not point to document in case of update
+                if(this.price && this.price >= val){
+                    return false ;
+                }
+                return true ;
+            } ,
+            message : 'Discount price ({VALUE}) should be less than regular price'
+        }
+    },
     summary: {
         type: String,
         trim: true,
@@ -47,7 +65,7 @@ const tourSchema = new mongoose.Schema({
     },
     imageCover: {
         type: String,
-        required: [true, 'A tour must have cover image']
+        // required: [true, 'A tour must have cover image']
     },
     images: [String],
     createdAt: {
@@ -55,7 +73,8 @@ const tourSchema = new mongoose.Schema({
         default: Date.now()
     },
     secretTour : {
-       type : Boolean 
+       type : Boolean  ,
+       default : false 
     } ,
     startDates: [Date]
 },
@@ -67,10 +86,19 @@ const tourSchema = new mongoose.Schema({
 tourSchema.virtual('durationweeks').get(function () {
     return this.duration / 7;
 })
+
+// Document middlewares
+
+//below functions only work in case of save and create not in case of update
 tourSchema.pre('save' , function(next){
     console.log(this) // here this refers to document
     next() ;
 }) 
+tourSchema.post('save' , function(doc , next){
+    console.log(doc) ;
+    next() ;
+})
+
 // Query middleware
 tourSchema.pre(/^find/ , function(next){
  console.log(this) // this refers query
@@ -79,10 +107,7 @@ tourSchema.pre(/^find/ , function(next){
  })
  next() ;
 }) 
-tourSchema.post('save' , function(doc , next){
-    console.log(doc) ;
-    next() ;
-})
+
 
 const Tour = mongoose.model('Tour', tourSchema);
 // const testTour = new Tour({
