@@ -8,11 +8,11 @@ class APIFeatures{
         const queryObj = {...this.queryString} ;  
         const excludedQueries = ['page' , 'sort' , 'limit' , 'fields'] ;      
         excludedQueries.forEach(el => delete queryObj[el]) ;
-
+        console.log('queryObj : ', queryObj) ;        
         let queryStr = JSON.stringify(queryObj) ;
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g , match => `$${match}`) ;         
+        console.log('queryStr : ' , queryStr) ;
         this.query.find(JSON.parse(queryStr)) ; 
-
         return this ;
     }
 

@@ -68,7 +68,7 @@ exports.getAllTours = async (req , res) => {
     //           throw new Error('This page not exist') ;
     //       }
     //   }
-      
+      console.log('req.query : ' , req.query) ;
       const features = new APIFeatures(Tour.find() , req.query).filter().sort().limitFields().paginate() ;
       const allTours = await features.query ;
     //   query.sort().select().skip().limit() 
@@ -100,6 +100,123 @@ exports.getAllTours = async (req , res) => {
 //    next() 
 // }
 
+exports.getTourStats = async (req , res) => {
+   try{
+       const aggregateData = await Tour.aggregate([
+           {
+              $match : {
+                duration : {
+                     $gte : 4
+                 }
+              } 
+            } , 
+            {
+              $group : {
+                  _id : '$difficulty' ,
+                  numTours : {
+                      $sum : 1
+                  } ,
+                  numRatings : {
+                      $sum : '$ratingQuantity'
+                  } ,
+                  avgRating : {
+                      $avg : '$ratingAverage'
+                  } ,
+                  avgPrice : {
+                      $avg : '$price'
+                  } ,
+                  minPrice : {
+                      $min : '$price'
+                  } ,
+                  maxPrice : {
+                       $max : '$price'
+                  } 
+              } ,
+           } ,
+           { 
+              $sort : {
+                  avgPrice : 1
+              }       
+           } ,
+        
+        //  below is to avoid one of the difficulty from db aggregation
+        
+        //    {
+        //       $match : {
+        //           _id : {
+        //               $ne : 'easy'
+        //           }
+        //       }
+        //    }
+       ])
+       return res.status(200).json({
+            status : 'success' ,
+            data : aggregateData
+       })
+   }catch(err){
+       console.log('err ====> ' , err) ;
+       res.status(400).json({
+           status : 'fail' ,
+           message : err.message || "Got some error"
+       })
+   }
+}
+exports.getMonthsTours = async (req ,res) => {
+    try{
+        const year = req.params.year * 1 ;
+        const aggregateData = await Tour.aggregate([
+            {
+                $unwind : "$startDates" 
+            } ,
+            {
+                $match : {
+                    startDates : {
+                         $gte : new Date(`${year}-01-01`) ,
+                         $lte : new Date(`${year}-12-31`) 
+                    }
+                }
+            } ,
+            {
+                $group : {
+                     _id : {$month : '$startDates'} ,
+                     numTours : {
+                         $sum : 1
+                     } ,
+                     tourName :{$push : '$name'}
+                }
+            } ,
+            {
+                $addFields : {
+                    month : '$_id'
+                }
+            } ,
+            {
+                $project : {
+                    _id : 0
+                }
+            } ,
+            {
+                $sort : {
+                    numTours: - 1
+                }
+            } ,
+            {
+                $limit : 6
+            }
+
+        ])
+        return res.status(200).json({
+            status : 'success' ,
+            data : aggregateData
+        })
+    }catch(err){
+         console.log('err ====> ' , err) ;
+         return res.status(400).json({
+              status : 'fail' ,
+              message : err.message || 'Error fetching data'
+         })
+    }
+}
 exports.checkBody = (req , res , next) => {
     console.log("Inside check body middleware");
     if(!req.body.name || !req.body.price){
