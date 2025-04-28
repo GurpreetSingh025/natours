@@ -1,5 +1,16 @@
 In this commit 
-filtering is done on queries using some mongoose in-built methods
-pagination is done using skip method
-sorting is done using sort 
-and field limitation is done using select method
+global error handler is implemented
+in this , each error weather cause due to some operation (Operational error)
+or cause by programme (programme error)
+is handled by a error middleware which calls function globalErrorHandler
+
+for Operational error we use AppError class which has property isOperational set to true
+
+in case of error , two things can happen 
+1) either error in development environement
+in this case all information is shown in response regarding with error
+2) either error in production environement 
+in this case limited information is shown in response  
+
+in case of production environement if error is programme error then in order to give meaningful
+response message condition is used based on isOperational
