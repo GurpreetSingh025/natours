@@ -3,6 +3,8 @@ const morgan = require('morgan') ;
 
 const tourRouter = require("./routes/tourRoutes") ;
 const userRouter = require("./routes/userRoutes") ;
+const AppError = require("./utils/AppError") ;
+const globalError = require("./controller/globalErrorController") ;
 
 const app = express() ;
 
@@ -46,5 +48,22 @@ app.use((req , res , next) => {
 app.use("/api/v1/tours" , tourRouter) ;
 app.use("/api/v1/users" , userRouter) ;
 
+app.use("*" , (req , res , next) => {
+    //  res.status(404).json({
+    //       status : 'fail' ,
+    //       message : `This ${req.originalUrl} url not present on this server`
+    //  })
+
+    // const err = new Error(`can't find ${req.originalUrl} in this server`) ;
+    // err.status = 'error' ;
+    // err.statusCode = 404 ;
+    // next(err) ;
+
+    next(new AppError(404 , `can't find ${req.originalUrl} in this server`)) ;
+    
+})
+app.use((err , req , res , next) => {
+    globalError(err , res) ;
+})
 module.exports = app ;
 

@@ -101,7 +101,7 @@ tourSchema.post('save' , function(doc , next){
 
 // Query middleware
 tourSchema.pre(/^find/ , function(next){
- console.log(this) // this refers query
+//  console.log(this) // this refers query
  this.find({
     secretTour : {$ne : true}  
  })

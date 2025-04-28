@@ -1,6 +1,7 @@
 
 const Tour = require('./../model/tourModel') ; // tour collection
 const APIFeatures = require('../utils/apiFeatures') ;
+const catchAsync = require("../utils/catchAsync") ;
 
 // const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)) ;
 
@@ -68,7 +69,7 @@ exports.getAllTours = async (req , res) => {
     //           throw new Error('This page not exist') ;
     //       }
     //   }
-      console.log('req.query : ' , req.query) ;
+    //   console.log('req.query : ' , req.query) ;
       const features = new APIFeatures(Tour.find() , req.query).filter().sort().limitFields().paginate() ;
       const allTours = await features.query ;
     //   query.sort().select().skip().limit() 
@@ -228,25 +229,26 @@ exports.checkBody = (req , res , next) => {
     next() ;
 }
 
-exports.getTour = async (req , res) => {
-    try{
-        const tour = await Tour.findById(req.params.id) ;
-        // same as Tour.findOne({ _id : req.params.id })
+exports.getTour = catchAsync(async (req , res , next) => {
+    const tour = await Tour.findById(req.params.id) ;
+    // same as Tour.findOne({ _id : req.params.id })
 
-        return res.status(200).json({
-           status : "success" ,
-           data : {
-               tour
-           }
-        })
-    }catch(err){
-        return res.status(404).json({
-             status : 'fail' ,
-             message : err
-        })
-    }
+    return res.status(200).json({
+       status : "success" ,
+       data : {
+           tour
+       }
+    })
+    // try{
 
-}
+    // }catch(err){
+    //     // return res.status(404).json({
+    //     //      status : 'fail' ,
+    //     //      message : err
+    //     // })
+    //     next(err) ;
+    // }
+})
 exports.createTour = async (req , res) => {
     try{
         if(req.body){
