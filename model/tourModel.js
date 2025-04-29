@@ -95,13 +95,13 @@ tourSchema.pre('save' , function(next){
     next() ;
 }) 
 tourSchema.post('save' , function(doc , next){
-    console.log(doc) ;
+    // console.log(doc) ;
     next() ;
 })
 
 // Query middleware
 tourSchema.pre(/^find/ , function(next){
- console.log(this) // this refers query
+//  console.log(this) // this refers query
  this.find({
     secretTour : {$ne : true}  
  })

@@ -1,51 +1,65 @@
 const AppError = require("../utils/appErrors");
 
-function handleCastErrorDB(error){
-    const message = `Invalid ${error.path} : ${error.value}` ;
-    return new AppError(message , 400) ;
+function handleCastErrorDB(error) {
+    const message = `Invalid ${error.path}: ${error.value}`;
+    return new AppError(message, 400);
 }
-function errorHandleDev(err , res){
-   res.status(err.statusCode).json({
-       status : err.status ,
-       err : err ,
-       message : err.message ,
-       stack : err.stack 
-   })
+
+function handleUniqueValueErrorDB(err) {
+    const message = `${err.keyValue.name} value has to be unique`;
+    return new AppError(message, 400);
 }
-function errorHandleProd(err , res){
-    // Operational error , send message to client
-    if(err.isOperational){
-        res.status(err.statusCode).json({
-            status : err.status ,
-            message : err.message  
-        })
-    }else{
-        // programming error message might be meaning less for client 
-        // so send normal error statement
+
+function handleValidationErrorDB(err) {
+    // console.log('handleValidationErrorDB ====>');
+    const fieldName = Object.keys(err.errors).map(val => val);
+    // console.log('fieldName ====>', fieldName);
+    const message = `Invalid value of ${fieldName.join(', ')}`; // Changed . to , for clarity
+    return new AppError(message, 400);
+}
+
+function errorHandleDev(err, res) {
+    res.status(err.statusCode || 500).json({
+        status: err.status || 'error',
+        err: err,
+        message: err.message,
+        stack: err.stack
+    });
+}
+
+function errorHandleProd(err, res) {
+    // console.log('inside errorHandleProd ====>');
+    // console.log('err ====>', err);
+    if (err.isOperational) {
+        res.status(err.statusCode || 400).json({
+            status: err.status || 'fail', // Use 'fail' for 4xx errors
+            message: err.message
+        });
+    } else {
+         // Log non-operational errors
         res.status(500).json({
-            status : err.status ,
-            message : 'Smething went wrong' 
-        })
+            status: 'error',
+            message: 'Something went wrong'
+        });
     }
-   
 }
 
 module.exports = (err, req, res, next) => {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
+
     if (process.env.NODE_ENV === "development") {
-        errorHandleDev(err , res) ;
+        errorHandleDev(err, res);
     } else if (process.env.NODE_ENV === "production") {
-        let error = {...err} ;
-        if(error.name = "CastError"){
-            error = handleCastErrorDB(error) ;
+        let error = { ...err , message : err.message , name : err.name };
+        if (error.name === "CastError") {
+            error = handleCastErrorDB(error);
+        } else if (error.code === 11000) {
+            error = handleUniqueValueErrorDB(error);
+        } else if (error.name === "ValidationError") {
+            error = handleValidationErrorDB(error);
         }
-        errorHandleProd(error , res) ;
+        errorHandleProd(error, res);
     }
-    // err.statusCode = err.statusCode || 500 ;
-    // err.status = err.status || 'error' ;
-    // res.status(err.statusCode).json({
-    //      status : err.status ,
-    //      message : err.message 
-    // })
-}
+    // Remove next() to prevent further middleware execution
+};

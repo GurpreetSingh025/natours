@@ -235,6 +235,7 @@ exports.checkBody = (req , res , next) => {
 exports.getTour = catchAsync(async (req , res , next) => {
     const tour = await Tour.findById(req.params.id) ;
     // same as Tour.findOne({ _id : req.params.id })
+    // console.log('tour ====> ' , tour) ;
     if(!tour){
        next(new AppError(`Not found document for id ${req.params.id}` , 404))
     }
