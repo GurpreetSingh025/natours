@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
     password : {
         type : String ,
         reqiured : [true , "Password is required"] ,
-        minlength : 8 
+        minlength : 8 ,
+        select : false 
     } ,
     passwordConfirm : {
         type : String ,
@@ -56,7 +57,14 @@ userSchema.pre('save' , async function(next){
      this.password = await bcrypt.hash(this.password , 12) ;
      this.passwordConfirm = undefined ;
 })
-
+userSchema.methods.isPasswordValid = async function(enteredPassword , originalEncryptedPassword){
+    console.log("passs ====> " , await bcrypt.compare(enteredPassword , originalEncryptedPassword))
+    if(await bcrypt.compare(enteredPassword , originalEncryptedPassword)){
+        return true 
+    }else{
+        return false 
+    }
+}
 const userModel = new mongoose.model("users" , userSchema) ;
 module.exports = userModel ;
 
