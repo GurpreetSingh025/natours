@@ -1,5 +1,6 @@
 const express = require('express') ;
 const tourController = require('../controller/tourController') ;
+const authController = require("../controller/authController") ;
 
 const router = express.Router() ;
 // param middleware
@@ -7,7 +8,7 @@ const router = express.Router() ;
 
 const bodyCheckMiddleware = tourController.checkBody ;
 
-router.route("/").get(tourController.getAllTours).post(bodyCheckMiddleware , tourController.createTour) ;
+router.route("/").get(authController.isTokenValid , tourController.getAllTours).post(bodyCheckMiddleware , tourController.createTour) ;
 router.route("/top-5-cheap").get(tourController.aliasTopTours , tourController.getAllTours) ;
 router.route('/tour-stats').get(tourController.getTourStats) ; 
 router.route('/tour-months/:year').get(tourController.getMonthsTours) ;

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose') ;
 const bcrypt = require("bcryptjs")
-
 const userSchema = new mongoose.Schema({
     name : {
          type : String ,
@@ -27,11 +26,13 @@ const userSchema = new mongoose.Schema({
     password : {
          type : String ,
          required : [true , 'Password is required'] ,
-         minlength : 8
-    } ,
+         minlength : 8 , 
+         select : false 
+    } , 
     passwordConfirm : {
         type : String ,
         required : [true , "Confirmed password is required"] ,
+        select : false ,
         validate : {
              validator : function(val){
                  if(this.password === val){
@@ -40,9 +41,23 @@ const userSchema = new mongoose.Schema({
                  return false ;
              } ,
              message : "Confirm password must be same as password"
-        }
+        } 
+    } ,
+    passwordChangedAt : {
+        type : Date 
     }
 })
+userSchema.methods.isPasswordValid = async function(encryptedPassword , userEnteredPassword){
+    return await bcrypt.compare(userEnteredPassword , encryptedPassword) ;
+}
+userSchema.methods.changePasswordAfter = function(jwtTimeStamp){
+   if(this.passwordChangedAt){
+       const changeTimeStamp = parseInt(this.passwordChangedAt.getTime() / 1000 , 10) ;
+       return jwtTimeStamp < changeTimeStamp ;
+   }
+
+   return false ;
+}
 userSchema.pre("save" , async function(next){
    const encryptedPassword = await bcrypt.hash(this.password , 12) ;
    this.password = encryptedPassword ;

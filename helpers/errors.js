@@ -17,6 +17,12 @@ function handleValidationErrorDB(err) {
     const message = `Invalid value of ${fieldName.join(', ')}`; // Changed . to , for clarity
     return new AppError(message, 400);
 }
+function handleJWTError(){
+    return new AppError("Invalid token" , 401) ;
+}
+function handleJWTExpireError(){
+    return new AppError("Expired token , please login again" , 401) ;   
+}
 
 function errorHandleDev(err, res) {
     res.status(err.statusCode || 500).json({
@@ -58,6 +64,10 @@ module.exports = (err, req, res, next) => {
             error = handleUniqueValueErrorDB(error);
         } else if (error.name === "ValidationError") {
             error = handleValidationErrorDB(error);
+        }else if(error.name === "JsonWebTokenError"){
+            error = handleJWTError() ;
+        }else if(error.name === "TokenExpiredError"){
+            error = handleJWTExpireError() ; 
         }
         errorHandleProd(error, res);
     }
